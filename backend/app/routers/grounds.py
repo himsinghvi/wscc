@@ -65,13 +65,16 @@ def get_ground(ground_id: str, user: CurrentUser = Depends(get_current_user)):
     if not ground:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Ground not found")
 
+    all_teams = S.TEAMS if sb is None else sb.table("teams").select("id,name,home_ground_id").execute().data
+    tname = {t["id"]: t["name"] for t in all_teams}
+
     here = [m for m in _matches(sb) if m.get("ground_id") == ground_id]
     for m in here:
-        m["home_team"] = S.team_name(m["home_team_id"])
-        m["away_team"] = S.team_name(m["away_team_id"])
+        m["home_team"] = tname.get(m["home_team_id"], m["home_team_id"])
+        m["away_team"] = tname.get(m["away_team_id"], m["away_team_id"])
     here.sort(key=lambda m: m.get("scheduled_at", ""), reverse=True)
 
-    home_teams = [t for t in S.TEAMS if t.get("home_ground_id") == ground_id]
+    home_teams = [t for t in all_teams if t.get("home_ground_id") == ground_id]
     return {"ground": ground, "matches": here, "match_count": len(here),
             "home_teams": [t["name"] for t in home_teams]}
 

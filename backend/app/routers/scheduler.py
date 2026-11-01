@@ -26,7 +26,17 @@ _LAST: dict = {}
 
 
 def _teams(sb):
-    return S.TEAMS if sb is None else sb.table("teams").select("id,name,home_ground_id").execute().data
+    return S.TEAMS if sb is None else sb.table("teams").select("id,name,short_name,home_ground_id").execute().data
+
+
+def _tmap(sb):
+    return {t["id"]: t for t in _teams(sb)}
+
+
+def _gmap(sb):
+    if sb is None:
+        return {g["id"]: g["name"] for g in S.GROUNDS}
+    return {g["id"]: g["name"] for g in sb.table("grounds").select("id,name").execute().data}
 
 
 def _matches(sb):
@@ -85,7 +95,9 @@ def _weekend_context(sb, poll_dates):
     return avoid_pairs, team_grounds
 
 
-def _validate_fixtures(fixtures, existing_pairs, existing_grounds):
+def _validate_fixtures(fixtures, existing_pairs, existing_grounds, tn=None, gn=None):
+    tn = tn or {}; gn = gn or {}
+    _t = lambda i: tn.get(i, S.team_name(i)); _g = lambda i: gn.get(i, S.ground_name(i))
     """A team must not get the same opponent or the same ground twice this
     weekend (across the submitted set + already-scheduled matches)."""
     pairs = set(existing_pairs)
@@ -99,12 +111,12 @@ def _validate_fixtures(fixtures, existing_pairs, existing_grounds):
             errors.append("A team cannot play itself."); continue
         key = tuple(sorted((a, b)))
         if key in pairs:
-            errors.append(f"{S.team_name(a)} vs {S.team_name(b)} is scheduled more than once.")
+            errors.append(f"{_t(a)} vs {_t(b)} is scheduled more than once.")
         pairs.add(key)
         if g:
             for t in (a, b):
                 if g in tg.get(t, set()):
-                    errors.append(f"{S.team_name(t)} is assigned {S.ground_name(g)} more than once.")
+                    errors.append(f"{_t(t)} is assigned {_g(g)} more than once.")
                 tg.setdefault(t, set()).add(g)
     return errors
 
@@ -117,8 +129,9 @@ def eligible(user: CurrentUser = Depends(require_admin)):
     w, meta = effective_windows(cfg, tz_now(cfg))
     sb = service_client()
     rows = _respondents(sb, w)
-    teams = [{"id": r["team_id"], "name": S.team_name(r["team_id"]),
-              "short": S.TEAMS_BY_ID.get(r["team_id"], {}).get("short_name"),
+    tmap = _tmap(sb)
+    teams = [{"id": r["team_id"], "name": (tmap.get(r["team_id"]) or {}).get("name", r["team_id"]),
+              "short": (tmap.get(r["team_id"]) or {}).get("short_name"),
               "available_dates": r.get("available_dates"),
               "available_slots": r.get("available_slots")} for r in rows]
     return {"weekend_date": w.weekend_date.isoformat(), "poll_label": meta["label"],
@@ -176,14 +189,13 @@ def generate(body: ScheduleRequest, user: CurrentUser = Depends(require_admin)):
                                avoid_pairs=avoid_pairs, team_grounds=team_grounds)
     ai = explain_schedule(result, team_names)
 
+    gnames = _gmap(sb)
     fixtures = [{
         "home_team_id": p.home_team_id, "home_team": team_names.get(p.home_team_id, p.home_team_id),
         "away_team_id": p.away_team_id, "away_team": team_names.get(p.away_team_id, p.away_team_id),
-        "ground_id": p.ground_id, "ground": S.ground_name(p.ground_id),
+        "ground_id": p.ground_id, "ground": gnames.get(p.ground_id),
         "met_before": p.meetings_so_far, "reason": _reason(p, body.ground_rotation),
     } for p in result.pairings]
-
-    gnames = {g["id"]: g["name"] for g in (S.GROUNDS)}
     payload = {
         "weekend_date": w.weekend_date.isoformat(),
         "date": target_date,
@@ -222,7 +234,8 @@ def apply(body: ApplyScheduleRequest, user: CurrentUser = Depends(require_admin)
     # Validate: no team gets the same opponent or ground twice this weekend
     # (across the submitted fixtures + anything already scheduled on these dates).
     existing_pairs, existing_grounds = _weekend_context(sb, poll_dates)
-    errors = _validate_fixtures(fixtures, existing_pairs, existing_grounds)
+    tn = {i: t.get("name") for i, t in _tmap(sb).items()}
+    errors = _validate_fixtures(fixtures, existing_pairs, existing_grounds, tn, _gmap(sb))
     if errors:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "; ".join(dict.fromkeys(errors)))
 

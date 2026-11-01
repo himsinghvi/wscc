@@ -71,19 +71,24 @@ def get_team(team_id: str, user: CurrentUser = Depends(get_current_user)):
     roster = ([p for p in S.PLAYERS if p["team_id"] == team_id] if sb is None
               else sb.table("players").select("*").eq("team_id", team_id).execute().data)
 
+    # resolve display names from the DB (Supabase) or sample data
+    tname = {t["id"]: t["name"] for t in teams}
+    gmap = (S.GROUNDS_BY_ID if sb is None
+            else {g["id"]: g for g in sb.table("grounds").select("id,name").execute().data})
+    gname = {gid: g["name"] for gid, g in gmap.items()}
+
     recent = sorted(
         [m for m in matches if team_id in (m["home_team_id"], m["away_team_id"])],
         key=lambda m: m.get("scheduled_at", ""), reverse=True,
     )[:6]
     for m in recent:
-        m = m  # annotate names for the UI
-        m["home_team"] = S.team_name(m["home_team_id"])
-        m["away_team"] = S.team_name(m["away_team_id"])
-        m["ground"] = S.ground_name(m.get("ground_id"))
+        m["home_team"] = tname.get(m["home_team_id"], m["home_team_id"])
+        m["away_team"] = tname.get(m["away_team_id"], m["away_team_id"])
+        m["ground"] = gname.get(m.get("ground_id"))
 
     return {
         "team": team,
-        "home_ground": S.GROUNDS_BY_ID.get(team.get("home_ground_id")),
+        "home_ground": gmap.get(team.get("home_ground_id")),
         "record": A.team_record(team_id, matches),
         "vs_all": A.team_vs_all(team_id, teams, matches),
         "roster": roster,
