@@ -2,9 +2,14 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { get } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import StatCard from '../components/StatCard'
 import Countdown from '../components/Countdown'
 import { Stagger, StaggerItem, Reveal } from '../components/motion'
+
+const whenLabel = (iso) => iso
+  ? new Date(iso).toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  : '—'
 
 const PHASE_UI = {
   before_open: { pill: 'pill-wait', text: 'Voting opens soon', icon: 'hourglass-split' },
@@ -14,12 +19,13 @@ const PHASE_UI = {
 }
 
 const QUICK = [
-  { to: '/availability', icon: 'calendar-check-fill', title: 'Submit availability', sub: 'Vote for this weekend. First-come ranking in ms.', accent: 'primary' },
-  { to: '/rankings', icon: 'bar-chart-steps', title: 'View rankings', sub: 'Published order with exact submit times.', accent: 'violet' },
-  { to: '/scheduler', icon: 'cpu-fill', title: 'AI scheduler', sub: 'Fair round-robin fixtures from availability.', accent: 'cyan' },
+  { to: '/availability', icon: 'calendar-check-fill', title: 'Submit availability', sub: 'Vote for this weekend. First-come ranking in ms.', cap: 'availability.submit' },
+  { to: '/rankings', icon: 'bar-chart-steps', title: 'View rankings', sub: 'Published order with exact submit times.' },
+  { to: '/scheduler', icon: 'cpu-fill', title: 'AI scheduler', sub: 'Fair round-robin fixtures from availability.', cap: 'schedule.manage' },
 ]
 
 export default function Dashboard() {
+  const { me } = useAuth()
   const [time, setTime] = useState(null)
   const [stats, setStats] = useState(null)
   const [avail, setAvail] = useState(null)
@@ -30,6 +36,8 @@ export default function Dashboard() {
     get('/availability/status').then(setAvail).catch(() => {})
   }, [])
 
+  const caps = new Set(me?.capabilities || [])
+  const quick = QUICK.filter((q) => !q.cap || caps.has(q.cap))
   const phase = time && PHASE_UI[time.phase]
 
   return (
@@ -59,13 +67,13 @@ export default function Dashboard() {
           </div>
 
           <div className="row g-3 mt-2">
-            <TimeTile icon="unlock" label="Voting opens · Mon 11:00"
+            <TimeTile icon="unlock" title="Voting opens" when={whenLabel(time?.vote_open_at)}
               body={time && (time.phase === 'before_open'
                 ? <Countdown to={time.vote_open_at} label="in" /> : <span className="text-success">Opened</span>)} />
-            <TimeTile icon="megaphone" label="Results publish · Mon 18:00"
+            <TimeTile icon="megaphone" title="Results publish" when={whenLabel(time?.publish_at)}
               body={time && (!time.published
                 ? <Countdown to={time.publish_at} label="in" /> : <Link to="/rankings" className="text-success">Published →</Link>)} />
-            <TimeTile icon="box-arrow-left" label="Backout closes · Thu 18:00"
+            <TimeTile icon="box-arrow-left" title="Backout open until" when={whenLabel(time?.backout_close_at)}
               body={time && <Countdown to={time.backout_close_at} label="in" />} />
           </div>
         </div>
@@ -82,7 +90,7 @@ export default function Dashboard() {
 
       {/* Quick actions */}
       <Stagger className="row g-3">
-        {QUICK.map((q) => (
+        {quick.map((q) => (
           <StaggerItem className="col-md-6 col-lg-4" key={q.to}>
             <Link to={q.to} className="text-decoration-none">
               <motion.div className="card wscc h-100" whileHover={{ y: -5 }}>
@@ -103,11 +111,12 @@ export default function Dashboard() {
   )
 }
 
-function TimeTile({ icon, label, body }) {
+function TimeTile({ icon, title, when, body }) {
   return (
     <div className="col-md-4">
       <div className="rounded-3 p-3 h-100" style={{ background: 'rgba(7,12,24,.5)', border: '1px solid var(--border-soft)' }}>
-        <div className="text-muted-2 small mb-1"><i className={`bi bi-${icon} me-1`} />{label}</div>
+        <div className="text-muted-2 small"><i className={`bi bi-${icon} me-1`} />{title}</div>
+        <div className="text-muted-2 mb-1" style={{ fontSize: '.72rem' }}>{when}</div>
         <div className="fs-5 fw-semibold mono">{body}</div>
       </div>
     </div>

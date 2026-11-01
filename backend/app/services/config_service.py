@@ -23,6 +23,14 @@ _DEFAULTS = dict(
 
 
 def league_team_count() -> int:
+    sb = service_client()
+    if sb is not None:
+        try:
+            r = sb.table("teams").select("id", count="exact").execute()
+            if r.count is not None:
+                return r.count
+        except Exception:
+            pass
     from ..core import sampledata as S
     return len(S.TEAMS)
 

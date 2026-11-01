@@ -94,7 +94,7 @@ create table if not exists app_config (
   publish_time       time not null default '18:00:00',
   backout_weekday    int  not null default 4,   -- 4=Thu
   backout_close_time time not null default '18:00:00',
-  max_voting_teams   int  not null default 8,   -- feature 6
+  max_voting_teams   int  not null default 0,   -- feature 6 (0 = all league teams)
   max_sessions_per_team int not null default 2, -- feature 2
   session_policy     session_policy not null default 'block_new',
   reject_early_votes boolean not null default false, -- else flag as 🔴 early
