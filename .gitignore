@@ -1,0 +1,33 @@
+# env & secrets
+.env
+.env.*
+!.env.example
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# node
+node_modules/
+dist/
+dist-ssr/
+*.local
+.vite/
+
+# raw scrape artifacts (untrusted HTML/JSON/screenshots from the crawler)
+/data/
+
+# os / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# runtime state (transient; durable copy lives in Supabase)
+backend/app/data/scheduled_polls.json
+backend/app/data/day_rules.json

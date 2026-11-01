@@ -1,0 +1,252 @@
+/* ============================================================
+   WSCC — refined dark theme + expressive motion
+   ============================================================ */
+:root {
+  color-scheme: dark;       /* native controls (date/time pickers, scrollbars) render dark → icons stay light */
+  --bg-0: #070c18;          /* deepest */
+  --bg-1: #0b1324;          /* app bg */
+  --surface: #111a30;
+  --surface-2: #16203a;
+  --surface-3: #1c2947;
+  --border: #233150;
+  --border-soft: #1a2540;
+  --text: #eaf1ff;
+  --muted: #9db0d4;
+  --muted-2: #6f82a8;
+
+  --primary: #5b8cff;
+  --primary-2: #7aa2ff;
+  --accent: #8b5cf6;        /* violet */
+  --cyan: #22d3ee;
+  --green: #34d399;
+  --amber: #fbbf24;
+  --red: #fb6a6a;
+
+  --glow: 0 0 0 1px rgba(91,140,255,.0), 0 8px 30px rgba(10,16,34,.5);
+  --glow-primary: 0 0 22px rgba(91,140,255,.45);
+  --radius: 18px;
+  --sidebar-w: 256px;
+  --ease-smooth: cubic-bezier(.22,.61,.36,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+}
+
+* { scrollbar-width: thin; scrollbar-color: var(--surface-3) transparent; }
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 10px; border: 2px solid transparent; background-clip: content-box; }
+*::-webkit-scrollbar-thumb:hover { background: var(--border); background-clip: content-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  color: var(--text);
+  background: var(--bg-1);
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ---------- Animated aurora / mesh background ---------- */
+.aurora {
+  position: fixed; inset: 0; z-index: -2; overflow: hidden;
+  background: var(--bg-1);
+}
+.aurora::before, .aurora::after {
+  content: ""; position: absolute; width: 60vw; height: 60vw;
+  border-radius: 50%; filter: blur(90px); opacity: .40; will-change: transform;
+}
+.aurora::before {
+  background: radial-gradient(circle at 30% 30%, #3b63d6, transparent 60%);
+  top: -15vw; left: -10vw; animation: drift1 22s var(--ease-smooth) infinite alternate;
+}
+.aurora::after {
+  background: radial-gradient(circle at 70% 70%, #7c3aed, transparent 60%);
+  bottom: -20vw; right: -10vw; animation: drift2 26s var(--ease-smooth) infinite alternate;
+}
+.aurora .blob3 {
+  content: ""; position: absolute; width: 42vw; height: 42vw; border-radius: 50%;
+  filter: blur(100px); opacity: .22;
+  background: radial-gradient(circle, #06b6d4, transparent 60%);
+  top: 30%; left: 40%; animation: drift3 30s ease-in-out infinite alternate;
+}
+/* subtle grid overlay for depth */
+.aurora .grid {
+  position: absolute; inset: 0; opacity: .04;
+  background-image: linear-gradient(var(--primary) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--primary) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 20%, transparent 75%);
+}
+@keyframes drift1 { from { transform: translate(0,0) scale(1); } to { transform: translate(8vw,6vw) scale(1.2); } }
+@keyframes drift2 { from { transform: translate(0,0) scale(1); } to { transform: translate(-7vw,-5vw) scale(1.15); } }
+@keyframes drift3 { 0%{transform:translate(-5vw,0)} 50%{transform:translate(5vw,4vw)} 100%{transform:translate(-3vw,-4vw)} }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before, .aurora::after, .aurora .blob3 { animation: none; }
+}
+
+/* ---------- Cards / surfaces (glass + glow) ---------- */
+.card.wscc {
+  position: relative;
+  background: linear-gradient(160deg, rgba(22,32,58,.82), rgba(13,20,38,.82));
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+  box-shadow: var(--glow);
+  color: var(--text);
+  overflow: hidden;
+  transition: transform .35s var(--ease-smooth), box-shadow .35s var(--ease-smooth), border-color .35s var(--ease-smooth);
+}
+/* sheen line on top edge */
+.card.wscc::after {
+  content: ""; position: absolute; inset: 0 0 auto 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(122,162,255,.5), transparent);
+  opacity: .6;
+}
+.card.wscc:hover {
+  transform: translateY(-4px);
+  border-color: rgba(91,140,255,.4);
+  box-shadow: 0 18px 50px rgba(5,10,25,.6), 0 0 0 1px rgba(91,140,255,.25);
+}
+button.card.wscc:active { transform: translateY(-1px) scale(.995); }
+
+.text-muted-2 { color: var(--muted) !important; }
+.mono { font-variant-numeric: tabular-nums; font-family: ui-monospace, "SF Mono", Menlo, monospace; }
+
+.gradient-text {
+  background: linear-gradient(100deg, #fff 10%, var(--primary-2) 55%, var(--accent));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+/* ---------- Sidebar ---------- */
+.wscc-sidebar {
+  background: linear-gradient(180deg, rgba(10,16,32,.9), rgba(8,12,24,.92));
+  backdrop-filter: blur(18px);
+  border-right: 1px solid var(--border-soft);
+  width: var(--sidebar-w);
+  position: sticky; top: 0; height: 100vh;
+}
+.brand-badge {
+  width: 40px; height: 40px; border-radius: 12px;
+  background: radial-gradient(circle at 30% 30%, var(--primary-2), var(--accent));
+  box-shadow: var(--glow-primary);
+  animation: breathe 5s ease-in-out infinite;
+}
+@keyframes breathe { 0%,100%{ box-shadow: 0 0 18px rgba(91,140,255,.4);} 50%{ box-shadow: 0 0 30px rgba(139,92,246,.6);} }
+
+.wscc-nav-link {
+  position: relative; color: var(--muted); text-decoration: none;
+  border-radius: 12px; padding: .6rem .8rem; margin: 1px 0;
+  display: flex; align-items: center; gap: .7rem; font-weight: 500; font-size: .92rem;
+  transition: color .25s var(--ease-smooth), background .25s var(--ease-smooth), transform .2s var(--ease-smooth);
+}
+.wscc-nav-link i { font-size: 1.1rem; transition: transform .3s var(--ease-spring); }
+.wscc-nav-link:hover { color: #fff; background: rgba(91,140,255,.08); transform: translateX(3px); }
+.wscc-nav-link:hover i { transform: scale(1.18) rotate(-4deg); }
+.wscc-nav-link.active { color: #fff; }
+.wscc-nav-link.active i { color: var(--primary-2); }
+/* sliding active pill is rendered by framer-motion (.nav-active-pill) */
+.nav-active-pill {
+  position: absolute; inset: 0; border-radius: 12px; z-index: -1;
+  background: linear-gradient(90deg, rgba(91,140,255,.28), rgba(139,92,246,.14));
+  border: 1px solid rgba(122,162,255,.35);
+  box-shadow: inset 0 0 20px rgba(91,140,255,.15);
+}
+.nav-active-pill::before {
+  content: ""; position: absolute; left: 0; top: 18%; bottom: 18%; width: 3px;
+  border-radius: 3px; background: linear-gradient(var(--primary-2), var(--accent));
+  box-shadow: var(--glow-primary);
+}
+
+/* ---------- Topbar ---------- */
+.wscc-topbar {
+  background: linear-gradient(180deg, rgba(11,19,36,.75), rgba(11,19,36,.4));
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-soft);
+  position: sticky; top: 0; z-index: 20;
+}
+
+/* ---------- Buttons ---------- */
+.btn { transition: transform .18s var(--ease-smooth), box-shadow .25s var(--ease-smooth), filter .2s; border-radius: 11px; font-weight: 600; }
+.btn:active { transform: scale(.96); }
+.btn-primary {
+  background: linear-gradient(100deg, var(--primary), var(--accent));
+  border: none; box-shadow: 0 6px 18px rgba(91,140,255,.35);
+}
+.btn-primary:hover { filter: brightness(1.08); box-shadow: 0 10px 26px rgba(91,140,255,.5); }
+.btn-outline-light { border-color: var(--border); color: var(--text); }
+.btn-outline-light:hover { background: var(--surface-2); border-color: var(--primary); color:#fff; }
+.btn-wa { background: linear-gradient(100deg,#25d366,#1ea95a); border: none; color: #052b12; font-weight: 700; }
+.btn-wa:hover { filter: brightness(1.06); color: #052b12; }
+
+/* ---------- Pills / badges ---------- */
+.pill { border-radius: 999px; padding: .28rem .8rem; font-weight: 600; font-size: .78rem; display:inline-flex; align-items:center; gap:.35rem; }
+.pill-open { background: rgba(52,211,153,.14); color: #8ff0cb; border: 1px solid rgba(52,211,153,.35); }
+.pill-closed { background: rgba(251,106,106,.12); color: #ffb3b3; border: 1px solid rgba(251,106,106,.35); }
+.pill-wait { background: rgba(91,140,255,.12); color: #bcd2ff; border: 1px solid rgba(91,140,255,.35); }
+.pill-open::before, .pill-wait::before, .pill-closed::before {
+  content:""; width:7px; height:7px; border-radius:50%; background: currentColor;
+  box-shadow: 0 0 8px currentColor; animation: blink 1.6s ease-in-out infinite;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+/* ---------- Ranking rows ---------- */
+.rank-row {
+  border-radius: 14px; padding: .8rem 1rem; margin-bottom: .55rem;
+  border: 1px solid var(--border-soft); display:flex; align-items:center; gap:1rem;
+  background: linear-gradient(160deg, rgba(22,32,58,.6), rgba(13,20,38,.6));
+  transition: transform .25s var(--ease-smooth), border-color .25s;
+}
+.rank-row:hover { transform: translateX(4px); border-color: rgba(91,140,255,.3); }
+.rank-row.green { border-left: 3px solid var(--green); }
+.rank-row.red   { border-left: 3px solid var(--red); background: rgba(251,106,106,.07); }
+.rank-badge { width: 2.4rem; height: 2.4rem; border-radius: 12px; display:grid; place-items:center; font-weight:800; background: var(--surface-3); color:#fff; }
+
+/* ---------- Forms ---------- */
+.form-control, .form-select {
+  background: rgba(10,16,32,.6); border-color: var(--border); color: var(--text); border-radius: 11px;
+}
+.form-control::placeholder { color: var(--muted-2); }
+.form-control:focus, .form-select:focus {
+  background: rgba(10,16,32,.8); color: var(--text); border-color: var(--primary);
+  box-shadow: 0 0 0 .22rem rgba(91,140,255,.22);
+}
+.form-control-color { padding: .2rem; }
+.table { color: var(--text); }
+.table > :not(caption) > * > * { border-color: var(--border-soft); }
+
+/* ---- contrast hardening ---- */
+/* Bootstrap's .text-muted is too dark on our navy bg */
+.text-muted { color: var(--muted) !important; }
+small, .small { color: inherit; }
+/* native date/time picker indicator visible on dark (force white regardless of OS theme) */
+::-webkit-calendar-picker-indicator {
+  filter: invert(1) !important; opacity: .9 !important; cursor: pointer;
+}
+input[type="date"], input[type="time"], input[type="datetime-local"], input[type="month"] {
+  color-scheme: dark;
+}
+/* dropdown option list legible in Chromium */
+select.form-select option, .form-control option { background: #0f1830; color: var(--text); }
+/* inputs inside Bootstrap input-groups keep light text */
+.input-group-text { color: var(--muted); }
+/* bootstrap-icons sometimes inherit currentColor from dark parents — keep explicit where needed */
+.bi { line-height: 1; }
+a { color: var(--primary-2); text-decoration: none; }
+a:hover { color: #a9c3ff; }
+.modal .card.wscc { box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+
+/* ---------- Keyframes used by components ---------- */
+@keyframes fadeUp { from { opacity:0; transform: translateY(14px);} to { opacity:1; transform:none; } }
+@keyframes shimmer { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
+.skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 37%, var(--surface) 63%);
+  background-size: 800px 100%; animation: shimmer 1.4s infinite linear;
+}
+
+/* dividers used in detail pages */
+.border-secondary-subtle { border-color: var(--border-soft) !important; }
+
+/* spinner recolor */
+.spinner-border.text-primary { color: var(--primary) !important; }

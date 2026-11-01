@@ -1,0 +1,11 @@
+data/
+scripts/
+**/__pycache__/
+**/.venv/
+**/venv/
+frontend/node_modules/
+frontend/dist/
+*.md
+!README.md
+backend/app/data/scheduled_polls.json
+backend/app/data/day_rules.json
