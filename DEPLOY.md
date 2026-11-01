@@ -35,13 +35,32 @@ Layout Vercel uses (already in the repo):
 - `vercel.json` routes: `/api/*` → the function, everything else → the SPA
   (`/index.html` fallback for client-side routes).
 
-### Steps
+### Deploy as ONE project (backend + frontend)
+
+This repo is a **single Vercel project**. `vercel.json` builds *both* the Python
+API (`api/index.py`) and the React SPA (`frontend` → `dist`) and routes `/api/*`
+to the function and everything else to the SPA. You do **not** create separate
+projects for `frontend`/`api`.
+
+If Vercel's import screen lists several things, it's showing (a) all GitHub repos
+you've granted access to, and/or (b) sub-folders it detected. Do this:
+
+1. **Show only this repo.** GitHub → *Settings → Applications → Vercel →
+   Configure → Repository access →* **Only select repositories → `wscc`**. Now
+   Vercel lists just `wscc`.
+2. **Import `wscc`** in Vercel → *Add New → Project*.
+3. **Root Directory = `./`** (the repository root — do NOT pick `frontend` or
+   `api`). Leave Framework Preset as **Other**; `vercel.json` drives the build.
+4. Add env vars (table below) → **Deploy**. One project, one URL, serving
+   `/` (SPA) and `/api/*` (FastAPI).
+
+### CLI alternative
 ```bash
 npm i -g vercel
-vercel            # first run: link/create the project
+cd <repo root>
+vercel            # link/create ONE project at the root
 vercel --prod     # production deploy
 ```
-Or import the repo in the Vercel dashboard — it auto-detects `vercel.json`.
 
 ### Environment variables (Vercel → Project → Settings → Environment Variables)
 Set these for a real backend (leave unset to run in offline demo/dev mode):
