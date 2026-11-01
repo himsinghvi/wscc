@@ -24,7 +24,8 @@ def register_session(body: SessionRegister, user: CurrentUser = Depends(get_curr
     if sb is None:
         return {"allowed": True, "dev_mode": True, "max_sessions_per_team": max_sessions}
     if not user.team_id:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "User has no team")
+        # admins / league officials aren't tied to a team — no per-team cap applies
+        return {"allowed": True, "no_team": True}
 
     active = (sb.table("active_sessions").select("*")
               .eq("team_id", user.team_id).is_("revoked_at", "null")

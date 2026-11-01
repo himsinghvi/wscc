@@ -21,15 +21,14 @@ export function AuthProvider({ children }) {
     try {
       const profile = await get('/meta/me')
       setMe(profile)
-      // register session (server enforces the 2-per-team cap)
-      await post('/sessions/register', { jti: sessionJti(), user_agent: navigator.userAgent })
-        .catch((e) => { throw e })
     } catch (e) {
       setMe(null)
       throw e
     } finally {
       setLoading(false)
     }
+    // Session registration is best-effort — never log the user out if it fails.
+    post('/sessions/register', { jti: sessionJti(), user_agent: navigator.userAgent }).catch(() => {})
   }, [])
 
   useEffect(() => {
