@@ -31,3 +31,10 @@ Thumbs.db
 # runtime state (transient; durable copy lives in Supabase)
 backend/app/data/scheduled_polls.json
 backend/app/data/day_rules.json
+
+.vercel
+.env*
+
+# vercel local
+.vercel/
+.env.local
