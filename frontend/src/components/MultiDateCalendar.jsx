@@ -52,9 +52,10 @@ export default function MultiDateCalendar({ value = [], onChange }) {
           const weekend = [5, 6].includes((new Date(y, m, d).getDay() + 6) % 7)
           return (
             <button key={key} type="button" onClick={() => toggle(d)}
-              className="btn btn-sm p-0"
+              className="btn btn-sm p-0 d-flex align-items-center justify-content-center"
               style={{
-                aspectRatio: '1', borderRadius: 9, fontSize: '.8rem', lineHeight: 1,
+                height: 40, minWidth: 0, borderRadius: 9, fontSize: '.85rem', lineHeight: 1,
+                touchAction: 'manipulation',
                 border: isToday ? '1px solid var(--primary)' : '1px solid transparent',
                 background: on ? 'linear-gradient(135deg,var(--primary),var(--accent))' : 'transparent',
                 color: on ? '#fff' : weekend ? 'var(--primary-2)' : 'var(--text)',

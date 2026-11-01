@@ -13,6 +13,7 @@ export default function PollSchedule() {
   const [f, setF] = useState(EMPTY)
   const [editingId, setEditingId] = useState(null)
   const [newSlot, setNewSlot] = useState('')
+  const [newDate, setNewDate] = useState('')
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
 
@@ -20,6 +21,7 @@ export default function PollSchedule() {
   useEffect(() => { load() }, [load])
   const upd = (k, v) => setF((s) => ({ ...s, [k]: v }))
 
+  const addDate = (d) => { if (d && !f.dates.includes(d)) upd('dates', [...f.dates, d].sort()); setNewDate('') }
   const removeDate = (d) => upd('dates', f.dates.filter((x) => x !== d))
   const addSlot = () => { const s = newSlot.trim(); if (s && !f.slots.includes(s)) upd('slots', [...f.slots, s]); setNewSlot('') }
   const removeSlot = (s) => upd('slots', f.slots.filter((x) => x !== s))
@@ -104,9 +106,16 @@ export default function PollSchedule() {
               <span>Dates asking availability for</span>
               {f.dates.length > 0 && <span className="text-primary">{f.dates.length} selected</span>}
             </label>
-            <MultiDateCalendar value={f.dates} onChange={(d) => upd('dates', d)} />
+
+            {/* Native date picker — reliable on mobile (shows the calendar icon, opens the OS calendar) */}
+            <div className="input-group mb-2">
+              <span className="input-group-text bg-transparent border-secondary"><i className="bi bi-calendar-plus text-muted-2" /></span>
+              <input type="date" className="form-control" value={newDate} onChange={(e) => addDate(e.target.value)} aria-label="Add a date" />
+              {newDate && <button type="button" className="btn btn-primary" onClick={() => addDate(newDate)}>Add</button>}
+            </div>
+
             {f.dates.length > 0 && (
-              <div className="d-flex flex-wrap gap-2 mt-2">
+              <div className="d-flex flex-wrap gap-2 mb-2">
                 {f.dates.map((d) => (
                   <span key={d} className="pill pill-wait">{dayLabel(d)}
                     <i className="bi bi-x-lg ms-1" role="button" onClick={() => removeDate(d)} /></span>
@@ -114,9 +123,15 @@ export default function PollSchedule() {
                 <button type="button" className="btn btn-sm btn-outline-light" onClick={() => upd('dates', [])}>Clear</button>
               </div>
             )}
-            <div className="text-muted-2 mb-3 mt-2" style={{ fontSize: '.72rem' }}>
-              <i className="bi bi-info-circle me-1" />Click days in the calendar to select multiple match dates.
-              Leave empty to poll a single weekend (next Saturday). Publish/backout default to open +6h / +3 days.
+
+            {/* Visual multi-select grid (desktop-friendly) */}
+            <details className="mb-2">
+              <summary className="small text-muted-2" style={{ cursor: 'pointer' }}>Or pick on a calendar</summary>
+              <div className="mt-2"><MultiDateCalendar value={f.dates} onChange={(d) => upd('dates', d)} /></div>
+            </details>
+
+            <div className="text-muted-2 mb-3" style={{ fontSize: '.72rem' }}>
+              <i className="bi bi-info-circle me-1" />Add one or more match dates. Leave empty to poll a single weekend (next Saturday).
             </div>
 
             <label className="form-label small text-muted-2">Slots per day</label>
