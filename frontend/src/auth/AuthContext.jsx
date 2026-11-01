@@ -57,6 +57,22 @@ export function AuthProvider({ children }) {
     return { magicLinkSent: true }
   }
 
+  const signInWithPassword = async (email, password) => {
+    if (!supabaseEnabled) { localStorage.setItem('wscc_dev_email', email); setLoading(true); await loadMe(); return { dev: true } }
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) throw error
+    return { ok: true }
+  }
+
+  const signUpWithPassword = async (email, password) => {
+    if (!supabaseEnabled) { localStorage.setItem('wscc_dev_email', email); setLoading(true); await loadMe(); return { dev: true } }
+    const { data, error } = await supabase.auth.signUp({ email, password })
+    if (error) throw error
+    // instant-confirm is on, so a session is returned and we're signed in
+    if (!data.session) return { needsConfirm: true }
+    return { ok: true }
+  }
+
   const signOut = async () => {
     await post('/sessions/logout', { jti: sessionJti() }).catch(() => {})
     if (supabaseEnabled) await supabase.auth.signOut()
@@ -65,7 +81,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthCtx.Provider value={{ me, loading, session, supabaseEnabled, signInWithEmail, signOut, reload: loadMe }}>
+    <AuthCtx.Provider value={{ me, loading, session, supabaseEnabled, signInWithEmail, signInWithPassword, signUpWithPassword, signOut, reload: loadMe }}>
       {children}
     </AuthCtx.Provider>
   )

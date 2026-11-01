@@ -5,8 +5,10 @@ import { get } from '../api/client'
 import Footer from '../components/Footer'
 
 export default function Login() {
-  const { signInWithEmail, supabaseEnabled } = useAuth()
+  const { signInWithEmail, signInWithPassword, signUpWithPassword, supabaseEnabled } = useAuth()
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [mode, setMode] = useState('signin')   // 'signin' | 'signup'
   const [msg, setMsg] = useState(null)
   const [err, setErr] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -18,15 +20,33 @@ export default function Login() {
   const admin = accounts.find((a) => a.role === 'admin')
   const teams = accounts.filter((a) => a.role !== 'admin')
 
-  const submit = async (e, forced) => {
+  // dev-mode quick login (unchanged): email only
+  const devLogin = async (e, forced) => {
+    e?.preventDefault(); setErr(null); setMsg(null); setBusy(true)
+    try { await signInWithEmail(forced || email) }
+    catch (e2) { setErr(e2.message || 'Sign-in failed.') } finally { setBusy(false) }
+  }
+
+  const submit = async (e) => {
     e?.preventDefault()
+    if (!supabaseEnabled) return devLogin(e)
     setErr(null); setMsg(null); setBusy(true)
     try {
-      const r = await signInWithEmail(forced || email)
-      if (r.magicLinkSent) setMsg('Check your inbox for a magic sign-in link.')
+      if (mode === 'signup') {
+        const r = await signUpWithPassword(email, password)
+        if (r.needsConfirm) setMsg('Account created — check your email to confirm, then sign in.')
+      } else {
+        await signInWithPassword(email, password)
+      }
     } catch (e2) {
-      setErr(e2.message || 'Sign-in failed. Is this email allow-listed?')
+      setErr(e2.message || 'Sign-in failed. Check your email/password or sign up first.')
     } finally { setBusy(false) }
+  }
+
+  const magicLink = async () => {
+    setErr(null); setMsg(null); setBusy(true)
+    try { await signInWithEmail(email); setMsg('Magic link sent — check your inbox.') }
+    catch (e2) { setErr(e2.message) } finally { setBusy(false) }
   }
 
   return (
@@ -41,23 +61,49 @@ export default function Login() {
             <i className="bi bi-lightning-charge-fill text-white" />
           </motion.div>
           <h4 className="fw-bold mb-1 gradient-text">Weekend Cricket League</h4>
-          <div className="text-muted-2 small">Sign in with your allow-listed email</div>
+          <div className="text-muted-2 small">
+            {supabaseEnabled ? (mode === 'signup' ? 'Create your account' : 'Sign in to your account') : 'Sign in (dev mode)'}
+          </div>
         </div>
 
         <form onSubmit={submit}>
-          <div className="mb-3">
-            <label className="form-label small text-muted-2">Email</label>
-            <div className="input-group">
-              <span className="input-group-text bg-transparent border-secondary"><i className="bi bi-envelope text-muted-2" /></span>
-              <input type="email" className="form-control form-control-lg" placeholder="you@club.com"
-                value={email} onChange={(e) => setEmail(e.target.value)} required />
-            </div>
+          <label className="form-label small text-muted-2">Email</label>
+          <div className="input-group mb-3">
+            <span className="input-group-text bg-transparent border-secondary"><i className="bi bi-envelope text-muted-2" /></span>
+            <input type="email" className="form-control form-control-lg" placeholder="you@club.com"
+              value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
           </div>
+
+          {supabaseEnabled && (
+            <>
+              <label className="form-label small text-muted-2">Password</label>
+              <div className="input-group mb-3">
+                <span className="input-group-text bg-transparent border-secondary"><i className="bi bi-lock text-muted-2" /></span>
+                <input type="password" className="form-control form-control-lg" placeholder="••••••••"
+                  value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6}
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} />
+              </div>
+            </>
+          )}
+
           <motion.button className="btn btn-primary btn-lg w-100" disabled={busy} whileTap={{ scale: 0.97 }}>
             {busy ? <span className="spinner-border spinner-border-sm" /> :
-              supabaseEnabled ? <><i className="bi bi-magic me-1" />Send magic link</> : <><i className="bi bi-box-arrow-in-right me-1" />Enter (dev mode)</>}
+              !supabaseEnabled ? <><i className="bi bi-box-arrow-in-right me-1" />Enter (dev mode)</> :
+              mode === 'signup' ? <><i className="bi bi-person-plus me-1" />Create account</> :
+              <><i className="bi bi-box-arrow-in-right me-1" />Sign in</>}
           </motion.button>
         </form>
+
+        {supabaseEnabled && (
+          <div className="d-flex justify-content-between mt-3" style={{ fontSize: '.8rem' }}>
+            <button className="btn btn-link p-0 text-decoration-none" style={{ fontSize: '.8rem' }}
+              onClick={() => { setMode(mode === 'signup' ? 'signin' : 'signup'); setErr(null); setMsg(null) }}>
+              {mode === 'signup' ? 'Have an account? Sign in' : 'First time? Create account'}
+            </button>
+            <button className="btn btn-link p-0 text-decoration-none text-muted-2" style={{ fontSize: '.8rem' }}
+              onClick={magicLink} disabled={busy || !email}>Email me a link instead</button>
+          </div>
+        )}
 
         {msg && <motion.div className="alert alert-success mt-3 py-2 small mb-0" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>{msg}</motion.div>}
         {err && <motion.div className="alert alert-danger mt-3 py-2 small mb-0" initial={{ x: -8 }} animate={{ x: [-8, 8, -5, 5, 0] }}>{err}</motion.div>}
@@ -68,7 +114,7 @@ export default function Login() {
               <span className="text-muted-2 small">Quick login (testing)</span>
               {admin && (
                 <motion.button className="btn btn-sm btn-primary" whileTap={{ scale: 0.95 }}
-                  onClick={(e) => submit(e, admin.email)} disabled={busy}>
+                  onClick={(e) => devLogin(e, admin.email)} disabled={busy}>
                   <i className="bi bi-shield-lock-fill me-1" />Admin
                 </motion.button>
               )}
@@ -77,7 +123,7 @@ export default function Login() {
             <div className="d-flex flex-wrap gap-2" style={{ maxHeight: 220, overflowY: 'auto' }}>
               {teams.map((t) => (
                 <motion.button key={t.email} className="btn btn-sm btn-outline-light" whileHover={{ y: -2 }} whileTap={{ scale: 0.95 }}
-                  onClick={(e) => submit(e, t.email)} disabled={busy} title={t.team}>
+                  onClick={(e) => devLogin(e, t.email)} disabled={busy} title={t.team}>
                   {t.team}
                 </motion.button>
               ))}
