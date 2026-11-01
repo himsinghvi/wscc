@@ -7,6 +7,7 @@ a dev-mode header `X-Dev-Email` is accepted so the UI is explorable offline.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from functools import lru_cache
 from typing import Optional
 
 import jwt
@@ -30,19 +31,30 @@ class CurrentUser:
         return self.role == "admin"
 
 
+@lru_cache
+def _jwk_client() -> "jwt.PyJWKClient":
+    # Supabase publishes its asymmetric signing keys here.
+    return jwt.PyJWKClient(f"{settings.supabase_url}/auth/v1/.well-known/jwks.json")
+
+
 def _decode_jwt(token: str) -> dict:
-    if not settings.supabase_jwt_secret:
-        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "JWT secret not configured")
+    """Verify a Supabase user JWT.
+
+    - If a legacy HS256 shared secret is configured, verify with it.
+    - Otherwise verify against the project's JWKS (modern ES256/RS256 keys).
+    """
+    opts = {"verify_aud": False}  # Supabase aud = "authenticated"
     try:
-        return jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-            options={"verify_aud": False},
-        )
+        if settings.supabase_jwt_secret:
+            return jwt.decode(token, settings.supabase_jwt_secret, algorithms=["HS256"], options=opts)
+        if settings.supabase_url:
+            key = _jwk_client().get_signing_key_from_jwt(token).key
+            return jwt.decode(token, key, algorithms=["ES256", "RS256"], options=opts)
     except jwt.PyJWTError as e:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid token: {e}")
+    except Exception as e:  # JWKS fetch / key errors
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Token verification failed: {e}")
+    raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, "Auth not configured")
 
 
 def _lookup_player(email: str, auth_user_id: Optional[str]) -> CurrentUser:
