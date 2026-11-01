@@ -53,6 +53,7 @@ function SidebarInner({ me, onNavigate }) {
     .map((s) => ({ ...s, items: s.items.filter(allowed) }))
     .filter((s) => s.items.length)
   const manage = [
+    { to: '/approvals', icon: 'person-check-fill', label: 'Approvals', cap: 'signup.approve' },
     { to: '/poll-schedule', icon: 'calendar-event-fill', label: 'Poll Schedule', cap: 'poll.manage' },
     { to: '/day-rules', icon: 'calendar-x-fill', label: 'Availability rules', cap: 'rules.manage' },
     { to: '/admin', icon: 'sliders', label: 'Admin', cap: 'admin.config' },

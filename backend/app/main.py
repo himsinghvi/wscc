@@ -14,7 +14,7 @@ from .core.config import settings
 from .core.supabase_client import is_configured
 from .routers import (
     availability, admin, teams, grounds, matches, stats,
-    tournaments, scheduler, directory, sessions, meta, day_rules, polls, dev,
+    tournaments, scheduler, directory, sessions, meta, day_rules, polls, dev, signup,
 )
 
 app = FastAPI(
@@ -40,7 +40,7 @@ def health():
 
 # All feature routers live under /api so they never collide with SPA routes.
 for r in (meta, sessions, availability, teams, grounds, matches, stats,
-          tournaments, scheduler, directory, admin, day_rules, polls, dev):
+          tournaments, scheduler, directory, admin, day_rules, polls, dev, signup):
     app.include_router(r.router, prefix="/api")
 
 

@@ -212,6 +212,17 @@ create table if not exists day_rules (
   primary key (entity_type, entity_id)
 );
 
+-- ---------- signup requests (team-select + admin approval) ----------
+create table if not exists signup_requests (
+  email       text primary key,
+  team_id     uuid references teams(id) on delete set null,
+  full_name   text,
+  status      text not null default 'pending' check (status in ('pending','approved','rejected')),
+  created_at  timestamptz not null default now(),
+  decided_by  uuid references players(id),
+  decided_at  timestamptz
+);
+
 -- ---------- audit log (admin/config changes) ----------
 create table if not exists audit_log (
   id         bigint generated always as identity primary key,

@@ -117,3 +117,19 @@ async def require_admin(user: CurrentUser = Depends(get_current_user)) -> Curren
     if not user.is_admin:
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Admin only")
     return user
+
+
+def bearer_claims(authorization: Optional[str]) -> dict:
+    """Decode the Supabase bearer token to its claims (401 if missing/invalid).
+    Does NOT require allow-listing — used for signup/pending resolution."""
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Missing bearer token")
+    return _decode_jwt(authorization.split(" ", 1)[1])
+
+
+def bearer_email(authorization: Optional[str]) -> str:
+    claims = bearer_claims(authorization)
+    email = claims.get("email") or claims.get("user_metadata", {}).get("email")
+    if not email:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token has no email")
+    return email

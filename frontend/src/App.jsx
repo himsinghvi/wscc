@@ -18,6 +18,9 @@ import Stats from './pages/Stats'
 import Tournaments from './pages/Tournaments'
 import Scheduler from './pages/Scheduler'
 import Directory from './pages/Directory'
+import CompleteSignup from './pages/CompleteSignup'
+import Pending from './pages/Pending'
+import Approvals from './pages/Approvals'
 import DayRules from './pages/DayRules'
 import PollSchedule from './pages/PollSchedule'
 import Admin from './pages/Admin'
@@ -39,6 +42,8 @@ export default function App() {
   }
 
   if (!me) return (<><Aurora /><Login /></>)
+  if (me.status === 'unregistered') return (<><Aurora /><CompleteSignup /></>)
+  if (me.status && me.status !== 'ok') return (<><Aurora /><Pending /></>)
 
   return (
     <>
@@ -60,6 +65,7 @@ export default function App() {
               <Route path="/tournaments" element={<Tournaments />} />
               {can('schedule.manage') && <Route path="/scheduler" element={<Scheduler />} />}
               <Route path="/directory" element={<Directory />} />
+              {can('signup.approve') && <Route path="/approvals" element={<Approvals />} />}
               {me.is_admin && <Route path="/poll-schedule" element={<PollSchedule />} />}
               {me.is_admin && <Route path="/day-rules" element={<DayRules />} />}
               {me.is_admin && <Route path="/admin" element={<Admin />} />}

@@ -18,8 +18,9 @@ export function AuthProvider({ children }) {
   const [session, setSession] = useState(null)
 
   const loadMe = useCallback(async () => {
+    let profile
     try {
-      const profile = await get('/meta/me')
+      profile = await get('/meta/me')
       setMe(profile)
     } catch (e) {
       setMe(null)
@@ -27,9 +28,11 @@ export function AuthProvider({ children }) {
     } finally {
       setLoading(false)
     }
-    // Session registration is best-effort — never log the user out if it fails.
-    post('/sessions/register', { jti: sessionJti(), user_agent: navigator.userAgent }).catch(() => {})
-  }, [])
+    // Session registration is best-effort and only for approved users.
+    if (profile && (profile.status === 'ok' || !supabaseEnabled)) {
+      post('/sessions/register', { jti: sessionJti(), user_agent: navigator.userAgent }).catch(() => {})
+    }
+  }, [supabaseEnabled])
 
   useEffect(() => {
     if (!supabaseEnabled) { loadMe().catch(() => {}); return }

@@ -21,6 +21,7 @@ alter table tournament_polls       enable row level security;
 alter table tournament_poll_votes  enable row level security;
 alter table scheduled_polls        enable row level security;
 alter table day_rules              enable row level security;
+alter table signup_requests        enable row level security;
 alter table audit_log              enable row level security;
 
 -- Convenience: service role bypasses RLS automatically in Supabase.
@@ -95,6 +96,10 @@ create policy sched_admin on scheduled_polls for all to authenticated
 
 create policy dayrules_read on day_rules for select to authenticated using (true);
 create policy dayrules_admin on day_rules for all to authenticated
+  using (current_role_is('admin')) with check (current_role_is('admin'));
+
+-- signup_requests: admins manage; the backend (service role) writes user requests
+create policy signup_admin on signup_requests for all to authenticated
   using (current_role_is('admin')) with check (current_role_is('admin'));
 
 -- ---- audit_log: admins read; nobody writes directly ----
