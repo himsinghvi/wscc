@@ -1,8 +1,7 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { AnimatePresence, motion } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useAuth } from './auth/AuthContext'
 import Aurora from './components/Aurora'
-import { pageVariants } from './components/motion'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import ResetPassword from './pages/ResetPassword'
@@ -54,8 +53,10 @@ export default function App() {
     <>
       <Aurora />
       <Layout>
-        <AnimatePresence mode="wait">
-          <motion.div key={location.pathname} variants={pageVariants} initial="initial" animate="enter" exit="exit">
+        {/* Enter-only keyed transition: the previous page unmounts immediately on
+            route change (no AnimatePresence exit node left on top), so taps never
+            get swallowed by a stuck overlay on mobile. */}
+        <motion.div key={location.pathname} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}>
             <Routes location={location}>
               <Route path="/" element={<Dashboard />} />
               {can('availability.submit') && <Route path="/availability" element={<Availability />} />}
@@ -77,8 +78,7 @@ export default function App() {
               {me.is_admin && <Route path="/admin" element={<Admin />} />}
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
-          </motion.div>
-        </AnimatePresence>
+        </motion.div>
       </Layout>
     </>
   )

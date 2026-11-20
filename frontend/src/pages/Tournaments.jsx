@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { get, post, put, del } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { Stagger, StaggerItem } from '../components/motion'
@@ -19,7 +19,14 @@ export default function Tournaments() {
     setList(d.tournaments)
     setSelId((cur) => cur || d.tournaments[0]?.id || null)
   }).catch(() => {}), [])
-  const loadDetail = useCallback((id) => id && get(`/tournaments/${id}`).then(setDetail).catch(() => {}), [])
+  // Normalize the detail payload so a missing array (e.g. an empty Supabase
+  // tournament) can never throw during render and white-screen the page.
+  const loadDetail = useCallback((id) => id && get(`/tournaments/${id}`).then((d) => setDetail({
+    ...d,
+    tournament: d.tournament || {},
+    teams: d.teams || [], polls: d.polls || [], fixtures: d.fixtures || [],
+    availability: d.availability || [], admins: d.admins || [],
+  })).catch(() => {}), [])
 
   useEffect(() => { loadList() }, [loadList])
   useEffect(() => { loadDetail(selId) }, [selId, loadDetail])
@@ -63,7 +70,12 @@ export default function Tournaments() {
         </div>
 
         <div className="col-lg-8">
-          {!detail ? <div className="spinner-border text-primary" /> : (
+          {!selId ? (
+            <div className="card wscc"><div className="card-body text-center py-5 text-muted-2">
+              <i className="bi bi-trophy fs-1 d-block mb-2 opacity-50" />
+              No tournaments yet.{me?.is_admin ? ' Create one to get started.' : ''}
+            </div></div>
+          ) : !detail ? <div className="spinner-border text-primary" /> : (
             <div className="card wscc"><div className="card-body">
               <TournamentHeader t={detail.tournament} isAdmin={detail.is_admin} />
 
@@ -76,15 +88,13 @@ export default function Tournaments() {
                 ))}
               </div>
 
-              <AnimatePresence mode="wait">
-                <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.2 }}>
+              <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
                   {tab === 'Overview' && <Overview d={detail} />}
                   {tab === 'Polls' && <Polls d={detail} tid={selId} onChange={refresh} />}
                   {tab === 'Fixtures' && <Fixtures d={detail} tid={selId} onChange={refresh} />}
                   {tab === 'Availability' && <Availability d={detail} tid={selId} onChange={refresh} />}
                   {tab === 'Admins' && <Admins d={detail} tid={selId} canManage={me?.is_admin} onChange={refresh} />}
-                </motion.div>
-              </AnimatePresence>
+              </motion.div>
             </div></div>
           )}
         </div>
