@@ -54,6 +54,7 @@ function SidebarInner({ me, onNavigate }) {
     .filter((s) => s.items.length)
   const manage = [
     { to: '/approvals', icon: 'person-check-fill', label: 'Approvals', cap: 'signup.approve' },
+    { to: '/members', icon: 'people-fill', label: 'Members', cap: 'admin.config' },
     { to: '/poll-schedule', icon: 'calendar-event-fill', label: 'Poll Schedule', cap: 'poll.manage' },
     { to: '/day-rules', icon: 'calendar-x-fill', label: 'Availability rules', cap: 'rules.manage' },
     { to: '/admin', icon: 'sliders', label: 'Admin', cap: 'admin.config' },

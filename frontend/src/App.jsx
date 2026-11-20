@@ -21,6 +21,7 @@ import Directory from './pages/Directory'
 import CompleteSignup from './pages/CompleteSignup'
 import Pending from './pages/Pending'
 import Approvals from './pages/Approvals'
+import Members from './pages/Members'
 import DayRules from './pages/DayRules'
 import PollSchedule from './pages/PollSchedule'
 import Admin from './pages/Admin'
@@ -66,6 +67,7 @@ export default function App() {
               {can('schedule.manage') && <Route path="/scheduler" element={<Scheduler />} />}
               <Route path="/directory" element={<Directory />} />
               {can('signup.approve') && <Route path="/approvals" element={<Approvals />} />}
+              {can('admin.config') && <Route path="/members" element={<Members />} />}
               {me.is_admin && <Route path="/poll-schedule" element={<PollSchedule />} />}
               {me.is_admin && <Route path="/day-rules" element={<DayRules />} />}
               {me.is_admin && <Route path="/admin" element={<Admin />} />}
