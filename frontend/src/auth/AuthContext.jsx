@@ -75,6 +75,19 @@ export function AuthProvider({ children }) {
     return { ok: true }
   }
 
+  const requestPasswordReset = async (email) => {
+    if (!supabaseEnabled) return { dev: true }
+    const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/reset` })
+    if (error) throw error
+    return { sent: true }
+  }
+
+  const updatePassword = async (password) => {
+    const { error } = await supabase.auth.updateUser({ password })
+    if (error) throw error
+    return { ok: true }
+  }
+
   const signOut = async () => {
     await post('/sessions/logout', { jti: sessionJti() }).catch(() => {})
     if (supabaseEnabled) await supabase.auth.signOut()
@@ -83,7 +96,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthCtx.Provider value={{ me, loading, session, supabaseEnabled, signInWithEmail, signInWithPassword, signUpWithPassword, signOut, reload: loadMe }}>
+    <AuthCtx.Provider value={{ me, loading, session, supabaseEnabled, signInWithEmail, signInWithPassword, signUpWithPassword, requestPasswordReset, updatePassword, signOut, reload: loadMe }}>
       {children}
     </AuthCtx.Provider>
   )

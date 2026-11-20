@@ -5,6 +5,7 @@ import Aurora from './components/Aurora'
 import { pageVariants } from './components/motion'
 import Layout from './components/Layout'
 import Login from './pages/Login'
+import ResetPassword from './pages/ResetPassword'
 import Dashboard from './pages/Dashboard'
 import Availability from './pages/Availability'
 import Rankings from './pages/Rankings'
@@ -41,6 +42,9 @@ export default function App() {
       </>
     )
   }
+
+  // password-reset landing (from the email link) — available regardless of auth state
+  if (location.pathname === '/reset') return (<><Aurora /><ResetPassword /></>)
 
   if (!me) return (<><Aurora /><Login /></>)
   if (me.status === 'unregistered') return (<><Aurora /><CompleteSignup /></>)

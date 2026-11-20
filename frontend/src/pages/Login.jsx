@@ -5,7 +5,7 @@ import { get } from '../api/client'
 import Footer from '../components/Footer'
 
 export default function Login() {
-  const { signInWithEmail, signInWithPassword, signUpWithPassword, supabaseEnabled } = useAuth()
+  const { signInWithEmail, signInWithPassword, signUpWithPassword, requestPasswordReset, supabaseEnabled } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [mode, setMode] = useState('signin')   // 'signin' | 'signup'
@@ -46,6 +46,13 @@ export default function Login() {
   const magicLink = async () => {
     setErr(null); setMsg(null); setBusy(true)
     try { await signInWithEmail(email); setMsg('Magic link sent — check your inbox.') }
+    catch (e2) { setErr(e2.message) } finally { setBusy(false) }
+  }
+
+  const forgot = async () => {
+    if (!email) { setErr('Enter your email first.'); return }
+    setErr(null); setMsg(null); setBusy(true)
+    try { await requestPasswordReset(email); setMsg('Password reset link sent — check your email.') }
     catch (e2) { setErr(e2.message) } finally { setBusy(false) }
   }
 
@@ -102,6 +109,12 @@ export default function Login() {
             </button>
             <button className="btn btn-link p-0 text-decoration-none text-muted-2" style={{ fontSize: '.8rem' }}
               onClick={magicLink} disabled={busy || !email}>Email me a link instead</button>
+          </div>
+        )}
+        {supabaseEnabled && mode === 'signin' && (
+          <div className="text-center mt-2">
+            <button className="btn btn-link p-0 text-decoration-none text-muted-2" style={{ fontSize: '.8rem' }}
+              onClick={forgot} disabled={busy || !email}>Forgot password?</button>
           </div>
         )}
 

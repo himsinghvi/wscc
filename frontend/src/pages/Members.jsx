@@ -15,6 +15,16 @@ export default function Members() {
 
   const fmt = (d) => d ? new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : '—'
   const all = data.members
+
+  const exportCsv = () => {
+    const cols = ['email', 'full_name', 'team', 'role', 'status', 'last_sign_in', 'created_at', 'phone', 'whatsapp']
+    const esc = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`
+    const csv = [cols.join(','), ...shown.map((m) => cols.map((c) => esc(m[c])).join(','))].join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+    const a = document.createElement('a')
+    a.href = url; a.download = `wscc-members-${new Date().toISOString().slice(0, 10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+  }
   const shown = all.filter((m) => !q || [m.email, m.full_name, m.team].some((v) => (v || '').toLowerCase().includes(q.toLowerCase())))
   const counts = all.reduce((a, m) => ({ ...a, [m.status]: (a[m.status] || 0) + 1 }), {})
 
@@ -22,7 +32,10 @@ export default function Members() {
     <>
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-1">
         <h3 className="fw-bold mb-0">Members</h3>
-        <span className="text-muted-2 small">{data.count} registered</span>
+        <div className="d-flex align-items-center gap-2">
+          <span className="text-muted-2 small">{data.count} registered</span>
+          <button className="btn btn-sm btn-outline-light" onClick={exportCsv}><i className="bi bi-download me-1" />CSV</button>
+        </div>
       </div>
       <div className="text-muted-2 small mb-3">
         Everyone registered on the app. <i className="bi bi-shield-lock me-1" />Passwords are stored one-way hashed and can never be shown.
