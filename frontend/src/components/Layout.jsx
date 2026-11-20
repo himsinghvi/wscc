@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { useAuth } from '../auth/AuthContext'
 import InstallPrompt from './InstallPrompt'
 import Footer from './Footer'
@@ -104,20 +104,20 @@ export default function Layout({ children }) {
         <SidebarInner me={me} />
       </aside>
 
-      {/* Mobile drawer */}
-      <AnimatePresence>
-        {drawer && (
-          <>
-            <motion.div className="position-fixed top-0 start-0 w-100 h-100" style={{ background: 'rgba(3,6,15,.6)', zIndex: 1040 }}
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setDrawer(false)} />
-            <motion.aside className="wscc-sidebar position-fixed top-0 start-0" style={{ zIndex: 1050 }}
-              initial={{ x: -280 }} animate={{ x: 0 }} exit={{ x: -280 }}
-              transition={{ type: 'spring', stiffness: 360, damping: 34 }}>
-              <SidebarInner me={me} onNavigate={() => setDrawer(false)} />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
+      {/* Mobile drawer — plain conditional render (no AnimatePresence/exit).
+          When closed nothing is in the DOM, so the full-screen backdrop can
+          never get stuck on top and swallow taps on mobile. */}
+      {drawer && (
+        <>
+          <motion.div className="position-fixed top-0 start-0 w-100 h-100" style={{ background: 'rgba(3,6,15,.6)', zIndex: 1040 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2 }} onClick={() => setDrawer(false)} />
+          <motion.aside className="wscc-sidebar position-fixed top-0 start-0" style={{ zIndex: 1050 }}
+            initial={{ x: -280 }} animate={{ x: 0 }}
+            transition={{ type: 'spring', stiffness: 360, damping: 34 }}>
+            <SidebarInner me={me} onNavigate={() => setDrawer(false)} />
+          </motion.aside>
+        </>
+      )}
 
       <div className="flex-grow-1" style={{ minWidth: 0 }}>
         <header className="wscc-topbar d-flex align-items-center justify-content-between px-3 py-2">
